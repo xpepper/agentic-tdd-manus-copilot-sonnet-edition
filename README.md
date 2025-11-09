@@ -20,20 +20,18 @@ An AI-powered CLI tool that uses multiple autonomous agents to complete code kat
 
 ### Setup
 
-1. Clone the repository:
-```bash
-git clone <repository-url>
-cd katone
-```
+**Option 1: Using Poetry (Recommended)**
 
-2. Install dependencies and activate virtual environment:
 ```bash
 poetry install
 poetry shell
 ```
 
-3. Install in development mode:
+**Option 2: Using venv**
+
 ```bash
+python -m venv .venv
+source .venv/bin/activate  # On Windows: .venv\Scripts\activate
 pip install -e .
 ```
 
@@ -219,6 +217,31 @@ base_urls = {
 ```
 
 ## Troubleshooting
+
+### ModuleNotFoundError: No module named 'agentic_tdd'
+
+This happens when the package isn't installed in the active virtual environment. Solutions:
+
+**If using venv:**
+```bash
+source .venv/bin/activate
+pip install -e .
+```
+
+**If using Poetry:**
+```bash
+poetry install
+poetry shell
+```
+
+Make sure you activate the environment before running the command.
+
+### TypeError: TyperArgument.make_metavar() error
+
+This is a compatibility issue with older Typer versions. Upgrade to fix:
+```bash
+pip install --upgrade typer
+```
 
 ### Agent Fails After Multiple Attempts
 
