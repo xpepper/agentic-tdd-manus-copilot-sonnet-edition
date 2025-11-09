@@ -48,6 +48,14 @@ agentic-tdd mars-rover-kata.md \
   --work-dir /tmp/mars-rover
 ```
 
+With iFlow provider:
+```bash
+agentic_tdd mars-rover-kata.md \
+  -p iflow \
+  -m qwen3-coder-plus \
+  -w /tmp/mars-rover
+```
+
 ### Command-Line Options
 
 ```bash
