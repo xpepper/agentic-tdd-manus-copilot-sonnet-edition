@@ -1,0 +1,39 @@
+[tool.poetry]
+name = "agentic-tdd"
+version = "0.1.0"
+description = "A CLI tool for multi-agent Test-Driven Development (TDD) for code katas."
+authors = ["Manus AI"]
+license = "MIT"
+readme = "README.md"
+
+[tool.poetry.dependencies]
+python = "^3.11"
+typer = {extras = ["rich"], version = "^0.9.0"}
+pydantic = "^2.5.3"
+langchain = "^0.1.0"
+langchain-openai = "^0.0.2"
+python-dotenv = "^1.0.0"
+gitpython = "^3.1.41"
+rich = "^13.7.0"
+httpx = "^0.26.0"
+
+[tool.poetry.group.dev.dependencies]
+pytest = "^7.4.4"
+ruff = "^0.1.11"
+mypy = "^1.8.0"
+black = "^23.12.1"
+
+[build-system]
+requires = ["poetry-core"]
+build-backend = "poetry.core.masonry.api"
+
+[tool.poetry.scripts]
+agentic-tdd = "agentic_tdd.__main__:app"
+
+[tool.ruff]
+line-length = 88
+select = ["E", "F", "I"]
+ignore = []
+
+[tool.mypy]
+ignore_missing_imports = true

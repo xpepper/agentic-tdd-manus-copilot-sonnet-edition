@@ -1,0 +1,104 @@
+Here’s a distilled, ready-to-paste prompt. I’m giving you a **System** + **User** pair so you can drop it into tools that support roles—or just merge them into one message if needed.
+
+---
+
+## System
+
+You are a senior Python engineer and AI agent-orchestration expert. Build a minimal, production-quality **CLI tool** named `agentic-tdd` that automates **multi-agent Test-Driven Development (TDD)** for code katas.
+
+### Core objectives
+
+* Implement a **CLI**:
+  `agentic-tdd <kata_md_path> --model <name> --provider <name> --api-key <key_or_env> --work-dir <dir> [--max-cycles N]`
+* Use **Python** for the tool, **LangChain** (or clean wrappers) for LLM calls.
+* Support **OpenAI-compatible APIs** (switchable provider + model). API keys should be loadable from env vars (preferred) or `--api-key`.
+* Implement **four agents** that operate in strict TDD cycles:
+
+  1. **Tester**: write a **new failing unit test** from the kata; run tests to **verify it fails**; stage but **do not commit** failing tests.
+  2. **Implementer**: make the failing test pass with the **minimum change**; run the whole suite; **commit** test+code when green.
+  3. **Refactorer**: improve design/readability without changing behavior; ensure tests still pass; **commit** or revert on failure (≤3 retries).
+  4. **Supervisor**: orchestrate cycles; detect “test already passing” (implementer overshot) and penalize/adjust prompts; unblock stuck agents (e.g., ask for preparatory refactor or simpler test); decide stop conditions.
+* Support **Rust** katas first (use `cargo test`), but design runners to be pluggable for other languages later.
+* Show **live console logs** of each step (who did what, test results).
+* Initialize a **git repo** in `--work-dir`; ensure commits only happen on green builds; meaningful commit messages.
+
+### Non-functional requirements
+
+* Clean, modular project structure; small cohesive modules.
+* Before each commit in this scaffold, run **format/lint/type/test** (e.g., `ruff + black + mypy + pytest` for the tool itself).
+* Reasonable defaults; fail fast with clear error messages.
+* Keep prompts/token use efficient; include only necessary context for each agent.
+
+### Agent behaviors (must)
+
+* **Tester**: reads kata MD + current code; proposes smallest next test; creates test file (Rust: `tests/…` or inline `#[test]`); runs `cargo test` to confirm **red**; stages file only. If test is **already green**, report to Supervisor (implementer overshot), then pick a different next test.
+* **Implementer**: reads failing test + last test output; edits minimal code; re-run tests until green (bounded attempts); on success commit staged test + code.
+* **Refactorer**: propose safe changes aligned with kata constraints (e.g., “single indentation level” rules); keep tests green; ≤3 attempts then escalate to Supervisor; commit on success.
+* **Supervisor**: simple rule engine is fine for M1 (procedural); handle stuck states; decide when to stop (when new failing test cannot be produced or `--max-cycles` reached).
+
+### Provider/model abstraction
+
+* Single interface for OpenAI-compatible chat completions (base URL + model name + key). Allow `--provider` options like `openai`, `perplexity`, `deepseek`, `iflow` (assume OpenAI-style endpoints), with easy extension.
+* Key priority: CLI `--api-key` > provider-specific env var (e.g., `OPENAI_API_KEY`, `PERPLEXITY_API_KEY`) > generic `AGENTIC_TDD_API_KEY`.
+
+### Testing/execution layer
+
+* Command runner with timeout, exit-code capture, and streamed logs.
+* Language runners (start with Rust): detect/create project skeleton if needed (e.g., `cargo init` when absent).
+
+### Commit policy
+
+* Never commit red builds.
+* Implementer commits a “green” feature commit.
+* Refactorer commits “refactor” commits that stay green.
+
+---
+
+## User
+
+Produce a single response that contains:
+
+1. **Repository layout** (tree).
+2. **Core files with full contents** in fenced code blocks, ready to copy:
+
+   * `pyproject.toml` (deps: typer/click, langchain, httpx/requests, gitpython or subprocess, ruff, black, mypy, pytest, rich/logging)
+   * `agentic_tdd/__main__.py` (CLI entry)
+   * `agentic_tdd/cli.py` (Typer app parsing: kata path, model, provider, api-key, work-dir, max-cycles)
+   * `agentic_tdd/config.py` (env + CLI merge)
+   * `agentic_tdd/llm/provider.py` (OpenAI-compatible client; base_url, headers, streaming optional)
+   * `agentic_tdd/agents/tester.py`, `implementer.py`, `refactorer.py`, `supervisor.py`
+   * `agentic_tdd/runners/rust.py` (test discovery/exec; `cargo init` if needed)
+   * `agentic_tdd/utils/git.py` (init repo, stage, commit, revert)
+   * `agentic_tdd/utils/shell.py` (run commands with logs/timeouts)
+   * `agentic_tdd/logging.py`
+3. A **minimal working implementation** of the TDD cycle for **Rust**:
+
+   * Tester writes a tiny failing test, verifies it fails, stages it.
+   * Implementer makes it pass minimally, runs all tests, commits.
+   * Refactorer attempts a safe rename/extract, keeps tests green, commits (or reverts after ≤3 tries).
+   * Supervisor orchestrates N cycles (default 5) and stops if no new failing test is possible.
+4. A **Backlog (TODO)** for next steps (checkbox list), prioritized to reach the full milestone and beyond (multi-language runners, better prompts, retries, cost controls, etc.).
+5. A concise **provider/model compatibility table** (OpenAI-compatible options you recommend for code+reasoning), with notes on strengths and any base URL/env var they typically use.
+6. **Makefile** (or task runner) with: `fmt`, `lint`, `type`, `test`, `dev-run` targets.
+7. **Quickstart** in the README section: create venv, install, run an example:
+
+   ```bash
+   agentic-tdd ~/kata/rust/mars-rover-kata/docs/kata_rules.md \
+     --model sonar-pro --provider openai \
+     --api-key $PERPLEXITY_API_KEY \
+     --work-dir ./agentic-tdd-kata \
+     --max-cycles 5
+   ```
+8. A **Commit plan** showing the small, sequential commits you would make for this scaffold (commit messages + the files changed).
+9. Keep commentary minimal—focus on code that runs. If an assumption is needed, choose sensible defaults and state them briefly at the top of the README.
+
+**Constraints**
+
+* Prefer **Typer** for CLI.
+* Use **subprocess** (or a thin wrapper) for `cargo` and `git`; GitPython optional.
+* Colorful, readable logs (Rich or similar).
+* No failing tests left uncommitted; no red commits.
+* Keep prompts short and targeted for each agent; send only necessary context.
+* Code should be copy-paste runnable on macOS/Linux with Python 3.11+, `git`, and (for demo) Rust toolchain.
+
+Deliver everything in one response.
