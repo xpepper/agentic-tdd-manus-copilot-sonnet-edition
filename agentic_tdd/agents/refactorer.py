@@ -100,7 +100,11 @@ CURRENT CODE:
                 # 4. Stage and Commit
                 stage_files(self.runner.work_dir, files=".")
                 commit_message = "refactor: Code cleanup and design improvement"
-                commit(self.runner.work_dir, commit_message)
+                committed = commit(self.runner.work_dir, commit_message)
+
+                if not committed:
+                    log_agent_action(self.name, "No changes were made during refactoring. Continuing without commit.")
+                    commit_message = "refactor: No changes needed"
 
                 return {"status": "green", "commit_message": commit_message}
             else:

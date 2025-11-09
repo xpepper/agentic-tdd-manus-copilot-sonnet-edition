@@ -119,7 +119,11 @@ Remember: Write ONLY production code, NO test code or test modules.
                 # 4. Stage and Commit
                 stage_files(self.runner.work_dir, files=".") # Stage all modified files (test + source)
                 commit_message = f"feat: Implement code to pass new test for {context['test_path']}"
-                commit(self.runner.work_dir, commit_message)
+                committed = commit(self.runner.work_dir, commit_message)
+
+                if not committed:
+                    log_agent_action(self.name, "No changes detected. Tests may have been passing already.")
+                    commit_message = "feat: No changes needed - tests already passing"
 
                 return {"status": "green", "commit_message": commit_message}
             else:
